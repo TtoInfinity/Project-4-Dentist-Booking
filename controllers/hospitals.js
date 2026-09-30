@@ -1,5 +1,5 @@
 const Hospital = require('../models/Hospital') ;
-
+const Appointment = require('../models/Appointment.js');
 //@desc     Get all hospitals
 //@route    GET /api/v1/hospitals
 //@access   Public
@@ -108,17 +108,32 @@ exports.updateHospital= async (req,res,next) => {
     }
 };
 
-//@desc     Delete hospital
-//@route    DELETE /api/v1/hospitals/:id
-//@access   Private
-exports.deleteHospital= async (req,res,next) => {
-    try{
-        const hospital = await Hospital.findByIdAndDelete(req.params.id);
-        if (!hospital){
-            return res.status (400).json({success: false}) ;
-        }
-        res.status (200).json({success:true, data: {}});
-    } catch(err) {
-        res.status (400).json({success: false}) ;
+// @desc    Delete hospital
+// @route   DELETE /api/v1/hospitals/:id
+// @access  Private
+exports.deleteHospital = async (req, res, next) => {
+  try {
+    const hospital = await Hospital.findById(req.params.id);
+
+    if (!hospital) {
+      return res.status(404).json({
+        success: false,
+        message: `Hospital not found with id of ${req.params.id}`
+      });
     }
+
+    // ลบการนัดหมายทั้งหมดที่เกี่ยวข้องกับโรงพยาบาลนี้ก่อน
+    await Appointment.deleteMany({ hospital: req.params.id });
+    // ลบโรงพยาบาล
+    await Hospital.deleteOne({ _id: req.params.id });
+
+    res.status(200).json({
+      success: true,
+      data: {}
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false
+    });
+  }
 };
