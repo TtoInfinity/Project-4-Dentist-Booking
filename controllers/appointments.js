@@ -90,6 +90,19 @@ exports.addAppointment = async (req, res, next) => {
         message: `No hospital with the id of ${req.params.hospitalID}`
       });
     }
+    // เพิ่ม user ID ลงใน req.body
+    req.body.user = req.user.id;
+
+    // ตรวจสอบรายการนัดหมายเดิมของผู้ใช้
+    const existedAppointments = await Appointment.find({ user: req.user.id });
+
+    // หากผู้ใช้ไม่ใช่ admin จะสร้างนัดหมายได้สูงสุด 3 รายการเท่านั้น
+    if (existedAppointments.length >= 3 && req.user.role !== 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: `The user with ID ${req.user.id} has already made 3 appointments`
+      });
+    }
 
     const appointment = await Appointment.create(req.body);
 
@@ -117,6 +130,14 @@ exports.updateAppointment = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: `No appointment with the id of ${req.params.id}`
+      });
+    }
+
+    // ตรวจสอบว่าผู้ใช้เป็นเจ้าของรายการนัดหมายหรือเป็น admin
+    if (appointment.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({
+        success: false,
+        message: `User ${req.user.id} is not authorized to update this appointment`
       });
     }
 
@@ -149,6 +170,14 @@ exports.deleteAppointment = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: `No appointment with the id of ${req.params.id}`
+      });
+    }
+
+    // ตรวจสอบว่าผู้ใช้เป็นเจ้าของรายการนัดหมายหรือเป็น admin
+    if (appointment.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({
+        success: false,
+        message: `User ${req.user.id} is not authorized to delete this appointment`
       });
     }
 
