@@ -1,31 +1,50 @@
 const express = require('express');
+const fs = require('fs');
 const dotenv = require('dotenv');
-dotenv.config({path: './config/config.env'});
-const cookieParser=require('cookie-parser');
+const configPath = fs.existsSync('./config/config.env')
+  ? './config/config.env'
+  : './__tests__/config.env';
+dotenv.config({ path: configPath });
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
-connectDB();
+if (process.env.NODE_ENV !== 'test') {
+  connectDB();
+}
 
-
-const app=express();
+const app = express();
 //Body parser
-app.use(express.json()) ;
+app.use(express.json());
 //Cookie parser
-app.use (cookieParser());
+app.use(cookieParser());
 
-const hospitals =require('./routes/hospitals');
+const dentists = require('./routes/dentists');
+const bookings = require('./routes/bookings');
+const discounts = require('./routes/discounts');
+const hospitals = require('./routes/hospitals');
 const appointments = require('./routes/appointments');
 const auth = require('./routes/auth');
-app.use('/api/v1/hospitals',hospitals);
-app.use('/api/v1/appointments', appointments) ;
-app.use('/api/v1/auth',auth);
 
-const PORT=process.env.PORT || 5003;
+app.use('/api/v1/dentists', dentists);
+app.use('/api/v1/bookings', bookings);
+app.use('/api/v1/discounts', discounts);
+app.use('/api/v1/hospitals', hospitals);
+app.use('/api/v1/appointments', appointments);
+app.use('/api/v1/auth', auth);
 
-const server = app.listen (PORT, console.log('Server running in ', process.env.NODE_ENV, ' mode on port ', PORT));
+const PORT = process.env.PORT || 5003;
 
-process.on('unhandledRejection', (err,promise) => {
+if (require.main === module) {
+  const server = app.listen(
+    PORT,
+    console.log('Server running in ', process.env.NODE_ENV, ' mode on port ', PORT)
+  );
+
+  process.on('unhandledRejection', (err, promise) => {
     console.log(`Error: ${err.message}`); //Close server & exit process
-    server.close(()=>process.exit(1)); 
-});
+    server.close(() => process.exit(1));
+  });
+}
 
-app.set('query parser', 'extended') ;
+app.set('query parser', 'extended');
+
+module.exports = app;
