@@ -7,9 +7,15 @@ const {
   deleteDentist
 } = require('../controllers/dentists');
 
+// Include other resource routers
+const reviewRouter = require('./reviews');
+
 const router = express.Router();
 
 const { protect, authorize } = require('../middleware/auth');
+
+// Re-route into other resource routers
+router.use('/:dentistId/reviews', reviewRouter);
 
 router
   .route('/')
