@@ -39,7 +39,7 @@ exports.register = async(req, res, next)=>{
         // res.status(201).json({success:true, token});
         sendTokenResponse (user,201,res);
     } catch(err){ 
-        res.status(400).json({success:false}); 
+        res.status(400).json({ success: false, message: err.message }); 
         console.log(err.stack);
     }
 };
@@ -159,4 +159,19 @@ exports.getMe=async (req, res,next)=>{
         success:true,
         data:user
     });
+};
+
+// @desc    Log user out / clear cookie
+// @route   GET /api/v1/auth/logout
+// @access  Public
+exports.logout = async (req, res, next) => {
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {}
+  });
 };

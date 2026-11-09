@@ -28,6 +28,9 @@ const ReviewSchema = new mongoose.Schema({
   }
 });
 
+// Prevent user from submitting more than one review per dentist
+ReviewSchema.index({ dentist: 1, user: 1 }, { unique: true });
+
 // Static method to get avg rating and save to Dentist
 ReviewSchema.statics.getAverageRating = async function (dentistId) {
   try {
@@ -48,14 +51,22 @@ ReviewSchema.statics.getAverageRating = async function (dentistId) {
       }
     ]);
 
+    const avgRating = obj[0]
+      ? Math.round((obj[0].averageRating + Number.EPSILON) * 10) / 10
+      : 0;
+    const count = obj[0] ? obj[0].reviewCount : 0;
+
     await mongoose.model('Dentist').findByIdAndUpdate(dentistId, {
-      averageRating: obj[0] ? obj[0].averageRating : 0,
-      reviewCount: obj[0] ? obj[0].reviewCount : 0
+      averageRating: avgRating,
+      reviewCount: count
     });
   } catch (err) {
     console.error(err);
   }
 };
+
+// Alias calcAverageRatings as specified in design class diagram
+ReviewSchema.statics.calcAverageRatings = ReviewSchema.statics.getAverageRating;
 
 // Call getAverageRating after save
 ReviewSchema.post('save', async function () {

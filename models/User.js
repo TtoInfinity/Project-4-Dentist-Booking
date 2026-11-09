@@ -65,4 +65,9 @@ UserSchema.methods.matchPassword=async function (enteredPassword) {
     return await bcrypt.compare (enteredPassword, this.password);
 }
 
+// Check if account is locked
+UserSchema.methods.isLocked = function () {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+};
+
 module.exports = mongoose.model('User', UserSchema);

@@ -83,6 +83,12 @@ exports.addReview = async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this dentist'
+      });
+    }
     res.status(400).json({ success: false, message: err.message });
   }
 };
@@ -123,6 +129,12 @@ exports.updateReview = async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this dentist'
+      });
+    }
     res.status(400).json({ success: false, message: err.message });
   }
 };
