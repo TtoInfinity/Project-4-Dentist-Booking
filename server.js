@@ -15,9 +15,11 @@ app.use (cookieParser());
 const hospitals =require('./routes/hospitals');
 const appointments = require('./routes/appointments');
 const auth = require('./routes/auth');
+const dentists = require('./routes/dentists');
 app.use('/api/v1/hospitals',hospitals);
 app.use('/api/v1/appointments', appointments) ;
 app.use('/api/v1/auth',auth);
+app.use('/api/v1/dentists', dentists);
 
 const PORT=process.env.PORT || 5003;
 
