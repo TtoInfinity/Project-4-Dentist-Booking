@@ -66,3 +66,4 @@ DentistSchema.virtual('reviews', {
 });
 
 module.exports = mongoose.model('Dentist', DentistSchema);
+
