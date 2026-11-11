@@ -1,5 +1,6 @@
 const Dentist = require('../models/Dentist');
 const Booking = require('../models/Booking');
+const Review = require('../models/Review');
 const { normalizeDateStr } = require('./leaves');
 
 // @desc    Get all dentists
@@ -15,7 +16,7 @@ exports.getDentists = async (req, res, next) => {
   let queryStr = JSON.stringify(reqQuery);
   queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, (match) => `$${match}`);
 
-  query = Dentist.find(JSON.parse(queryStr)).populate('bookings');
+  query = Dentist.find(JSON.parse(queryStr)).populate('bookings').populate('reviews');
 
   if (req.query.select) {
     const fields = req.query.select.split(',').join(' ');
@@ -64,7 +65,9 @@ exports.getDentists = async (req, res, next) => {
 // @access  Public
 exports.getDentist = async (req, res, next) => {
   try {
-    const dentist = await Dentist.findById(req.params.id).populate('bookings');
+    const dentist = await Dentist.findById(req.params.id)
+      .populate('bookings')
+      .populate('reviews');
     if (!dentist) {
       return res.status(404).json({
         success: false,
@@ -83,9 +86,20 @@ exports.getDentist = async (req, res, next) => {
 exports.createDentist = async (req, res, next) => {
   try {
     if (Array.isArray(req.body.leaveDates)) {
-      req.body.leaveDates = req.body.leaveDates
-        .map((d) => normalizeDateStr(d))
-        .filter(Boolean);
+      const normalized = [];
+      for (const d of req.body.leaveDates) {
+        const norm = normalizeDateStr(d);
+        if (!norm) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid date format: ${d}. Please use YYYY-MM-DD`
+          });
+        }
+        if (!normalized.includes(norm)) {
+          normalized.push(norm);
+        }
+      }
+      req.body.leaveDates = normalized;
     }
     const dentist = await Dentist.create(req.body);
     res.status(201).json({ success: true, data: dentist });
@@ -103,9 +117,20 @@ exports.createDentist = async (req, res, next) => {
 exports.updateDentist = async (req, res, next) => {
   try {
     if (Array.isArray(req.body.leaveDates)) {
-      req.body.leaveDates = req.body.leaveDates
-        .map((d) => normalizeDateStr(d))
-        .filter(Boolean);
+      const normalized = [];
+      for (const d of req.body.leaveDates) {
+        const norm = normalizeDateStr(d);
+        if (!norm) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid date format: ${d}. Please use YYYY-MM-DD`
+          });
+        }
+        if (!normalized.includes(norm)) {
+          normalized.push(norm);
+        }
+      }
+      req.body.leaveDates = normalized;
     }
     const dentist = await Dentist.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -119,7 +144,10 @@ exports.updateDentist = async (req, res, next) => {
     }
     res.status(200).json({ success: true, data: dentist });
   } catch (err) {
-    res.status(400).json({ success: false });
+    res.status(400).json({
+      success: false,
+      message: err.message || 'Cannot update dentist'
+    });
   }
 };
 
@@ -138,6 +166,7 @@ exports.deleteDentist = async (req, res, next) => {
     }
 
     await Booking.deleteMany({ dentist: req.params.id });
+    await Review.deleteMany({ dentist: req.params.id });
     await Dentist.deleteOne({ _id: req.params.id });
 
     res.status(200).json({

@@ -118,11 +118,37 @@ exports.createDiscount = async (req, res, next) => {
 // @access  Private (Admin)
 exports.updateDiscount = async (req, res, next) => {
   try {
+    const existing = await DiscountCode.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: `No discount code with the id of ${req.params.id}`
+      });
+    }
+
     if (req.body.expirationDate && !req.body.expiresAt) {
       req.body.expiresAt = req.body.expirationDate;
     }
+    if (req.body.discountValue === undefined) {
+      if (req.body.discountPercent !== undefined) {
+        req.body.discountValue = req.body.discountPercent;
+      } else if (req.body.amount !== undefined) {
+        req.body.discountValue = req.body.amount;
+      }
+    }
     if (req.body.code) {
       req.body.code = req.body.code.trim().toUpperCase();
+    }
+
+    const effectiveType = req.body.discountType || existing.discountType;
+    const effectiveValue =
+      req.body.discountValue !== undefined ? req.body.discountValue : existing.discountValue;
+
+    if (effectiveType === 'percent' && (effectiveValue < 1 || effectiveValue > 100)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Percentage discount value must be between 1 and 100'
+      });
     }
 
     const discount = await DiscountCode.findByIdAndUpdate(
@@ -133,13 +159,6 @@ exports.updateDiscount = async (req, res, next) => {
         runValidators: true
       }
     );
-
-    if (!discount) {
-      return res.status(404).json({
-        success: false,
-        message: `No discount code with the id of ${req.params.id}`
-      });
-    }
 
     res.status(200).json({
       success: true,

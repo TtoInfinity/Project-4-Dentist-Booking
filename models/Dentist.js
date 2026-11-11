@@ -25,7 +25,12 @@ const DentistSchema = new mongoose.Schema(
       min: [0, 'Price cannot be negative']
     },
     leaveDates: {
-      type: [String],
+      type: [
+        {
+          type: String,
+          match: [/^\d{4}-\d{2}-\d{2}$/, 'Please use YYYY-MM-DD format']
+        }
+      ],
       default: []
     },
     averageRating: {

@@ -154,7 +154,10 @@ exports.addBooking = async (req, res, next) => {
     }
 
     // Core Req #3: Registered user can book only ONE session (unless admin)
-    const existedBookings = await Booking.find({ user: req.user.id });
+    const existedBookings = await Booking.find({
+      user: req.user.id,
+      status: { $ne: 'cancelled' }
+    });
     if (existedBookings.length >= 1 && req.user.role !== 'admin') {
       return res.status(400).json({
         success: false,
@@ -271,38 +274,52 @@ exports.updateBooking = async (req, res, next) => {
       });
     }
 
-    // Additional Req #4: Recalculate discount if discountCode is updated
-    const rawCode = req.body.discountCode || req.body.code || req.body.promoCode;
-    if (rawCode !== undefined) {
-      const originalPrice = typeof dentist.price === 'number' ? dentist.price : booking.originalPrice;
-      if (rawCode === null || rawCode === '') {
+    // Additional Req #4: Recalculate price and discount if discountCode or dentist is updated
+    const rawCode = req.body.discountCode ?? req.body.code ?? req.body.promoCode;
+    const isDentistChanged =
+      req.body.dentist && req.body.dentist.toString() !== booking.dentist.toString();
+
+    if (rawCode !== undefined || isDentistChanged) {
+      const originalPrice =
+        typeof dentist.price === 'number' ? dentist.price : booking.originalPrice;
+      const effectiveCode = rawCode !== undefined ? rawCode : booking.discountCode;
+
+      if (effectiveCode === null || effectiveCode === '' || effectiveCode === undefined) {
         req.body.originalPrice = originalPrice;
         req.body.discountCode = null;
         req.body.discountAmount = 0;
         req.body.finalPrice = originalPrice;
       } else {
         const discount = await DiscountCode.findOne({
-          code: String(rawCode).trim().toUpperCase()
+          code: String(effectiveCode).trim().toUpperCase()
         });
         if (
           !discount ||
           !discount.isActive ||
           new Date(discount.expiresAt) <= new Date()
         ) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid or expired discount code'
-          });
-        }
-        const discountAmount =
-          discount.discountType === 'percent'
-            ? Math.round((originalPrice * discount.discountValue) / 100)
-            : Math.min(originalPrice, discount.discountValue);
+          if (rawCode !== undefined) {
+            return res.status(400).json({
+              success: false,
+              message: 'Invalid or expired discount code'
+            });
+          }
+          // Existing code expired while switching dentist: reset discount
+          req.body.originalPrice = originalPrice;
+          req.body.discountCode = null;
+          req.body.discountAmount = 0;
+          req.body.finalPrice = originalPrice;
+        } else {
+          const discountAmount =
+            discount.discountType === 'percent'
+              ? Math.round((originalPrice * discount.discountValue) / 100)
+              : Math.min(originalPrice, discount.discountValue);
 
-        req.body.originalPrice = originalPrice;
-        req.body.discountCode = discount.code;
-        req.body.discountAmount = discountAmount;
-        req.body.finalPrice = Math.max(0, originalPrice - discountAmount);
+          req.body.originalPrice = originalPrice;
+          req.body.discountCode = discount.code;
+          req.body.discountAmount = discountAmount;
+          req.body.finalPrice = Math.max(0, originalPrice - discountAmount);
+        }
       }
     }
 
