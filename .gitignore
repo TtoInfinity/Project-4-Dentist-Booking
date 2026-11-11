@@ -1,2 +1,19 @@
-node_modules/*
+# Dependencies
+node_modules/
+
+# Environment Variables & Secrets
+.env
 config/config.env
+config/*.env
+*.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
