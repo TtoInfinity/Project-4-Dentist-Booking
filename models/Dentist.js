@@ -4,9 +4,10 @@ const DentistSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Please add a name'],
+      required: [true, 'Please add a dentist name'],
       unique: true,
-      trim: true
+      trim: true,
+      maxlength: [100, 'Name can not be more than 100 characters']
     },
     yearsOfExperience: {
       type: Number,
@@ -20,7 +21,8 @@ const DentistSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
-      default: 1000
+      default: 1000,
+      min: [0, 'Price cannot be negative']
     },
     leaveDates: {
       type: [
@@ -33,7 +35,9 @@ const DentistSchema = new mongoose.Schema(
     },
     averageRating: {
       type: Number,
-      default: 0
+      default: 0,
+      min: [0, 'Rating cannot be less than 0'],
+      max: [5, 'Rating cannot be more than 5']
     },
     reviewCount: {
       type: Number,
@@ -66,4 +70,3 @@ DentistSchema.virtual('reviews', {
 });
 
 module.exports = mongoose.model('Dentist', DentistSchema);
-

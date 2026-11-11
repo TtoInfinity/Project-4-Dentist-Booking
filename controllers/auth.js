@@ -1,25 +1,5 @@
 const User = require('../models/User');
 
-// Ensure pre-save hook handles Mongoose where next is not passed to async hooks
-if (User.schema && User.schema.s && User.schema.s.hooks) {
-  const saveHooks = User.schema.s.hooks._pres.get('save');
-  if (saveHooks) {
-    const hook = saveHooks.find((h) => h.fn && h.fn.toString().includes('isModified'));
-    if (hook) {
-      const origFn = hook.fn;
-      hook.fn = async function (next) {
-        if (!this.isModified('password')) {
-          if (typeof next === 'function') {
-            return next();
-          }
-          return;
-        }
-        return origFn.call(this, next);
-      };
-    }
-  }
-}
-
 //@desc     Register user
 //@route    POST /api/v1/auth/register
 //@access   Public

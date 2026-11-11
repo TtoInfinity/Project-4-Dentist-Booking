@@ -8,6 +8,8 @@ const {
 } = require('../controllers/dentists');
 
 // Include other resource routers
+const bookingRouter = require('./bookings');
+const leaveRouter = require('./leaves');
 const reviewRouter = require('./reviews');
 
 const router = express.Router();
@@ -15,6 +17,9 @@ const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
 
 // Re-route into other resource routers
+router.use('/:dentistId/bookings', bookingRouter);
+router.use('/:dentistID/bookings', bookingRouter);
+router.use('/:id/leaves', leaveRouter);
 router.use('/:dentistId/reviews', reviewRouter);
 
 router
