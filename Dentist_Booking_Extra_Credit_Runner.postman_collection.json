@@ -1,0 +1,2091 @@
+{
+  "info": {
+    "_postman_id": "e5f9c0b2-8d3a-4e4b-af2c-9a7b6d5e4f3a",
+    "name": "Dentist Booking - Extra Credit Runner",
+    "description": "Self-contained Postman Collection Runner covering all 5 Extra Credit features (Account Lockout, Dentist Leave Dates, Promotional Discount Codes, Review & Auto Rating Aggregation, and iCalendar .ics Export). Can be run as a full collection or folder-by-folder.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin.extra@dentistbooking.com",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "12345678",
+      "type": "string"
+    },
+    {
+      "key": "ADMIN_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lock_email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lock_password",
+      "value": "CorrectPass123",
+      "type": "string"
+    },
+    {
+      "key": "leave_dentist_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leave_dentist_name",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "LEAVE_USER_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leave_booking_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "discount_dentist_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "promo_code_percent",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "promo_code_expired",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "discount_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "DISCOUNT_USER_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "review_dentist_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "REVIEW_USER1_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "REVIEW_USER2_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "review1_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "review2_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ics_dentist_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ICS_USER1_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ICS_USER2_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ics_booking_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Account Lockout (Brute-Force Protection)",
+      "item": [
+        {
+          "name": "1.1 Register User for Lockout Test",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "const email = `lockuser_${uniqueId}@gmail.com`;",
+                  "pm.collectionVariables.set(\"lock_email\", email);",
+                  "pm.collectionVariables.set(\"lock_password\", \"CorrectPass123\");"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"1.1 Register Lockout User: Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Lockout Test User\",\n    \"tel\": \"0811112222\",\n    \"email\": \"{{lock_email}}\",\n    \"password\": \"{{lock_password}}\",\n    \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Failed Login Attempt #1 (Wrong Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"1.2 Attempt #1: Status code is 401 Invalid credentials\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "    pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{lock_email}}\",\n    \"password\": \"WrongPassword1\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Failed Login Attempt #2 (Wrong Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"1.3 Attempt #2: Status code is 401 Invalid credentials\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{lock_email}}\",\n    \"password\": \"WrongPassword2\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Failed Login Attempt #3 (Wrong Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"1.4 Attempt #3: Status code is 401 Invalid credentials\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{lock_email}}\",\n    \"password\": \"WrongPassword3\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 Failed Login Attempt #4 (Wrong Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"1.5 Attempt #4: Status code is 401 Invalid credentials\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{lock_email}}\",\n    \"password\": \"WrongPassword4\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Failed Login Attempt #5 -> Triggers Account Lockout (423)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"1.6 Attempt #5: Status code is 423 Locked\", function () {",
+                  "    pm.response.to.have.status(423);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"1.6 Attempt #5: Returns 'Account is temporarily locked' message\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "    pm.expect(jsonData.message).to.include(\"Account is temporarily locked\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{lock_email}}\",\n    \"password\": \"WrongPassword5\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.7 Login with Correct Password While Locked -> Still Blocked (423)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"1.7 Locked Check: Status code is 423 even with correct password\", function () {",
+                  "    pm.response.to.have.status(423);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"1.7 Locked Check: Account remains locked\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "    pm.expect(jsonData.message).to.include(\"Account is temporarily locked\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{lock_email}}\",\n    \"password\": \"{{lock_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Dentist Leave Dates Management",
+      "item": [
+        {
+          "name": "2.1 Admin Log-in (Leave Dates Setup)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const adminEmail = pm.collectionVariables.get(\"admin_email\") || \"admin.extra@dentistbooking.com\";",
+                  "const adminPassword = pm.collectionVariables.get(\"admin_password\") || \"12345678\";",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"Extra Credit Admin\",",
+                  "            tel: \"0899999999\",",
+                  "            email: adminEmail,",
+                  "            password: adminPassword,",
+                  "            role: \"admin\"",
+                  "        })",
+                  "    }",
+                  "}, function () {});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"2.1 Admin Log-in: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set(\"ADMIN_TOKEN\", jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{admin_email}}\",\n    \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Admin Create Dentist for Leave Test",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "pm.collectionVariables.set(\"leave_dentist_name\", `Dr. LeaveTest ${uniqueId}`);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"2.2 Create Dentist: Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.collectionVariables.set(\"leave_dentist_id\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"{{leave_dentist_name}}\",\n    \"yearsOfExperience\": 8,\n    \"areaOfExpertise\": \"Endodontics\",\n    \"price\": 1200,\n    \"leaveDates\": [\"2026-12-24\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Admin Add Leave Dates (POST /dentists/:id/leaves)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"2.3 Add Leave Dates: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"2.3 Add Leave Dates: Appends new leave dates\", function () {",
+                  "    pm.expect(jsonData.data.leaveDates).to.include(\"2026-12-24\");",
+                  "    pm.expect(jsonData.data.leaveDates).to.include(\"2026-12-25\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"leaveDates\": [\"2026-12-25\", \"2026-12-26\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{leave_dentist_id}}/leaves",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{leave_dentist_id}}", "leaves"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 Admin Replace Leave Dates (PUT /dentists/:id/leaves)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"2.4 Set Leave Dates: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"2.4 Set Leave Dates: Replaces leaveDates array\", function () {",
+                  "    pm.expect(jsonData.data.leaveDates).to.deep.equal([\"2026-12-25\", \"2026-12-31\"]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"leaveDates\": [\"2026-12-25\", \"2026-12-31\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{leave_dentist_id}}/leaves",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{leave_dentist_id}}", "leaves"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 Public View Dentist Leave Dates (GET /dentists/:id/leaves)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Register a test user for booking against this dentist",
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"Leave Booking User\",",
+                  "            tel: \"0822223333\",",
+                  "            email: `leaveuser_${uniqueId}@gmail.com`,",
+                  "            password: \"12345678\",",
+                  "            role: \"user\"",
+                  "        })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (!err && res && res.json() && res.json().token) {",
+                  "        pm.collectionVariables.set(\"LEAVE_USER_TOKEN\", res.json().token);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"2.5 Get Leave Dates: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"2.5 Get Leave Dates: Returns leaveDates list\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.leaveDates).to.include(\"2026-12-25\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{leave_dentist_id}}/leaves",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{leave_dentist_id}}", "leaves"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.6 User Book on Dentist Leave Date -> Blocked (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"2.6 Book on Leave Date: Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"2.6 Book on Leave Date: Error message states dentist is on leave\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "    pm.expect(jsonData.message).to.include(\"on leave\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{LEAVE_USER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingDate\": \"2026-12-25T10:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{leave_dentist_id}}/bookings",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{leave_dentist_id}}", "bookings"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.7 User Book on Available Date -> Success (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"2.7 Book on Available Date: Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.collectionVariables.set(\"leave_booking_id\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{LEAVE_USER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingDate\": \"2026-12-20T10:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{leave_dentist_id}}/bookings",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{leave_dentist_id}}", "bookings"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.8 User Update Booking onto Dentist Leave Date -> Blocked (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"2.8 Update to Leave Date: Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"2.8 Update to Leave Date: Error message states dentist is on leave\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "    pm.expect(jsonData.message).to.include(\"on leave\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{LEAVE_USER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingDate\": \"2026-12-31T14:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/bookings/{{leave_booking_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "bookings", "{{leave_booking_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Promotional Discount Codes",
+      "item": [
+        {
+          "name": "3.1 Admin Log-in (Discount Setup)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const adminEmail = pm.collectionVariables.get(\"admin_email\") || \"admin.extra@dentistbooking.com\";",
+                  "const adminPassword = pm.collectionVariables.get(\"admin_password\") || \"12345678\";",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"Extra Credit Admin\",",
+                  "            tel: \"0899999999\",",
+                  "            email: adminEmail,",
+                  "            password: adminPassword,",
+                  "            role: \"admin\"",
+                  "        })",
+                  "    }",
+                  "}, function () {});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"3.1 Admin Log-in: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set(\"ADMIN_TOKEN\", jsonData.token);",
+                  "    const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "    const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "    pm.sendRequest({",
+                  "        url: `${baseUrl}/api/v1/dentists`,",
+                  "        method: \"POST\",",
+                  "        header: {",
+                  "            \"Content-Type\": \"application/json\",",
+                  "            \"Authorization\": `Bearer ${jsonData.token}`",
+                  "        },",
+                  "        body: {",
+                  "            mode: \"raw\",",
+                  "            raw: JSON.stringify({",
+                  "                name: `Dr. PromoTest ${uniqueId}`,",
+                  "                yearsOfExperience: 12,",
+                  "                areaOfExpertise: \"Prosthodontics\",",
+                  "                price: 2000",
+                  "            })",
+                  "        }",
+                  "    }, function (err, res) {",
+                  "        if (!err && res && res.json() && res.json().data) {",
+                  "            pm.collectionVariables.set(\"discount_dentist_id\", res.json().data._id);",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{admin_email}}\",\n    \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Admin Create 20% Discount Code",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "pm.collectionVariables.set(\"promo_code_percent\", `SMILE20_${uniqueId}`);",
+                  "pm.collectionVariables.set(\"promo_code_expired\", `EXPIRED_${uniqueId}`);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"3.2 Create 20% Discount Code: Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"3.2 Create 20% Discount Code: Value is 20 percent\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data.discountType).to.eql(\"percent\");",
+                  "    pm.expect(jsonData.data.discountValue).to.eql(20);",
+                  "});",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.collectionVariables.set(\"discount_id\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"{{promo_code_percent}}\",\n    \"discountType\": \"percent\",\n    \"discountValue\": 20,\n    \"expiresAt\": \"2028-12-31T23:59:59.000Z\",\n    \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/discounts",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "discounts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Admin Create Expired Discount Code",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"Discount Test User\",",
+                  "            tel: \"0833334444\",",
+                  "            email: `discountuser_${uniqueId}@gmail.com`,",
+                  "            password: \"12345678\",",
+                  "            role: \"user\"",
+                  "        })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (!err && res && res.json() && res.json().token) {",
+                  "        pm.collectionVariables.set(\"DISCOUNT_USER_TOKEN\", res.json().token);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"3.3 Create Expired Discount Code: Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"{{promo_code_expired}}\",\n    \"discountType\": \"fixed\",\n    \"discountValue\": 500,\n    \"expiresAt\": \"2020-01-01T00:00:00.000Z\",\n    \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/discounts",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "discounts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 User Validate Discount Code (GET /discounts/:code)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"3.4 Validate Discount Code: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"3.4 Validate Discount Code: Code is valid and not expired\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.isValid).to.eql(true);",
+                  "    pm.expect(jsonData.isExpired).to.eql(false);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DISCOUNT_USER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/discounts/{{promo_code_percent}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "discounts", "{{promo_code_percent}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 User Create Booking with Expired Code -> Blocked (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"3.5 Expired Code Check: Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"3.5 Expired Code Check: Rejects expired discount code\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "    pm.expect(jsonData.message).to.include(\"Invalid or expired discount code\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DISCOUNT_USER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingDate\": \"2026-12-10T10:00:00.000Z\",\n    \"discountCode\": \"{{promo_code_expired}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{discount_dentist_id}}/bookings",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{discount_dentist_id}}", "bookings"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.6 User Create Booking with Valid 20% Code -> Calculates Final Price (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"3.6 Booking with Discount: Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"3.6 Booking with Discount: Calculates originalPrice (2000), discountAmount (400), finalPrice (1600)\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data.originalPrice).to.eql(2000);",
+                  "    pm.expect(jsonData.data.discountAmount).to.eql(400);",
+                  "    pm.expect(jsonData.data.finalPrice).to.eql(1600);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DISCOUNT_USER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingDate\": \"2026-12-10T10:00:00.000Z\",\n    \"discountCode\": \"{{promo_code_percent}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{discount_dentist_id}}/bookings",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{discount_dentist_id}}", "bookings"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.7 Admin Delete Discount Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"3.7 Delete Discount Code: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/discounts/{{discount_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "discounts", "{{discount_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Dentist Review & Auto Rating Aggregation",
+      "item": [
+        {
+          "name": "4.1 Admin Log-in & Create Dentist for Review Test",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const adminEmail = pm.collectionVariables.get(\"admin_email\") || \"admin.extra@dentistbooking.com\";",
+                  "const adminPassword = pm.collectionVariables.get(\"admin_password\") || \"12345678\";",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"Extra Credit Admin\",",
+                  "            tel: \"0899999999\",",
+                  "            email: adminEmail,",
+                  "            password: adminPassword,",
+                  "            role: \"admin\"",
+                  "        })",
+                  "    }",
+                  "}, function () {});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"4.1 Admin Log-in: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set(\"ADMIN_TOKEN\", jsonData.token);",
+                  "    const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "    const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "    pm.sendRequest({",
+                  "        url: `${baseUrl}/api/v1/dentists`,",
+                  "        method: \"POST\",",
+                  "        header: {",
+                  "            \"Content-Type\": \"application/json\",",
+                  "            \"Authorization\": `Bearer ${jsonData.token}`",
+                  "        },",
+                  "        body: {",
+                  "            mode: \"raw\",",
+                  "            raw: JSON.stringify({",
+                  "                name: `Dr. ReviewTest ${uniqueId}`,",
+                  "                yearsOfExperience: 9,",
+                  "                areaOfExpertise: \"Pediatric Dentistry\",",
+                  "                price: 1500",
+                  "            })",
+                  "        }",
+                  "    }, function (err, res) {",
+                  "        if (!err && res && res.json() && res.json().data) {",
+                  "            pm.collectionVariables.set(\"review_dentist_id\", res.json().data._id);",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{admin_email}}\",\n    \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 User 1 Adds Review (Rating: 5)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"Reviewer One\",",
+                  "            tel: \"0844445555\",",
+                  "            email: `reviewer1_${uniqueId}@gmail.com`,",
+                  "            password: \"12345678\",",
+                  "            role: \"user\"",
+                  "        })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (!err && res && res.json() && res.json().token) {",
+                  "        pm.collectionVariables.set(\"REVIEW_USER1_TOKEN\", res.json().token);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"4.2 User 1 Adds Review: Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"4.2 User 1 Adds Review: Rating is 5\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data.rating).to.eql(5);",
+                  "});",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.collectionVariables.set(\"review1_id\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{REVIEW_USER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rating\": 5,\n    \"comment\": \"Excellent dentist, very gentle and professional!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{review_dentist_id}}/reviews",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{review_dentist_id}}", "reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 User 1 Attempts Duplicate Review -> Blocked (400)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"Reviewer Two\",",
+                  "            tel: \"0855556666\",",
+                  "            email: `reviewer2_${uniqueId}@gmail.com`,",
+                  "            password: \"12345678\",",
+                  "            role: \"user\"",
+                  "        })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (!err && res && res.json() && res.json().token) {",
+                  "        pm.collectionVariables.set(\"REVIEW_USER2_TOKEN\", res.json().token);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"4.3 Duplicate Review Check: Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"4.3 Duplicate Review Check: Prevents multiple reviews per dentist\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "    pm.expect(jsonData.message).to.include(\"already reviewed\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{REVIEW_USER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rating\": 4,\n    \"comment\": \"Attempting second review on same dentist\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{review_dentist_id}}/reviews",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{review_dentist_id}}", "reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 User 2 Adds Review (Rating: 3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"4.4 User 2 Adds Review: Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.collectionVariables.set(\"review2_id\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{REVIEW_USER2_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rating\": 3,\n    \"comment\": \"Good clinic, slight wait time.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{review_dentist_id}}/reviews",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{review_dentist_id}}", "reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.5 Verify Dentist Auto-Aggregated Rating (Avg 4.0, Count 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"4.5 Auto Rating Check: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"4.5 Auto Rating Check: averageRating is 4 and reviewCount is 2\", function () {",
+                  "    pm.expect(jsonData.data.averageRating).to.eql(4);",
+                  "    pm.expect(jsonData.data.reviewCount).to.eql(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{review_dentist_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{review_dentist_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.6 User 2 Updates Own Review (Rating: 3 -> 4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"4.6 Update Review: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"4.6 Update Review: Rating updated to 4\", function () {",
+                  "    pm.expect(jsonData.data.rating).to.eql(4);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{REVIEW_USER2_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rating\": 4,\n    \"comment\": \"Updated: Very satisfied with follow-up care!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/reviews/{{review2_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "reviews", "{{review2_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.7 Verify Dentist Rating Recalculated After Update (Avg 4.5, Count 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"4.7 Recalculated Rating Check: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"4.7 Recalculated Rating Check: averageRating is 4.5 and reviewCount is 2\", function () {",
+                  "    pm.expect(jsonData.data.averageRating).to.eql(4.5);",
+                  "    pm.expect(jsonData.data.reviewCount).to.eql(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{review_dentist_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{review_dentist_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.8 User 2 Deletes Own Review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"4.8 Delete Review: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{REVIEW_USER2_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/reviews/{{review2_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "reviews", "{{review2_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Export Confirmed Booking as iCalendar (.ics)",
+      "item": [
+        {
+          "name": "5.1 Admin Log-in & Setup Dentist for .ics Test",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const adminEmail = pm.collectionVariables.get(\"admin_email\") || \"admin.extra@dentistbooking.com\";",
+                  "const adminPassword = pm.collectionVariables.get(\"admin_password\") || \"12345678\";",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"Extra Credit Admin\",",
+                  "            tel: \"0899999999\",",
+                  "            email: adminEmail,",
+                  "            password: adminPassword,",
+                  "            role: \"admin\"",
+                  "        })",
+                  "    }",
+                  "}, function () {});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"5.1 Admin Log-in: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set(\"ADMIN_TOKEN\", jsonData.token);",
+                  "    const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "    const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "    pm.sendRequest({",
+                  "        url: `${baseUrl}/api/v1/dentists`,",
+                  "        method: \"POST\",",
+                  "        header: {",
+                  "            \"Content-Type\": \"application/json\",",
+                  "            \"Authorization\": `Bearer ${jsonData.token}`",
+                  "        },",
+                  "        body: {",
+                  "            mode: \"raw\",",
+                  "            raw: JSON.stringify({",
+                  "                name: `Dr. CalendarTest ${uniqueId}`,",
+                  "                yearsOfExperience: 7,",
+                  "                areaOfExpertise: \"General Dentistry\",",
+                  "                price: 1000",
+                  "            })",
+                  "        }",
+                  "    }, function (err, res) {",
+                  "        if (!err && res && res.json() && res.json().data) {",
+                  "            pm.collectionVariables.set(\"ics_dentist_id\", res.json().data._id);",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{admin_email}}\",\n    \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 Owner User Creates Confirmed Booking",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"ICS Owner User\",",
+                  "            tel: \"0866667777\",",
+                  "            email: `icsowner_${uniqueId}@gmail.com`,",
+                  "            password: \"12345678\",",
+                  "            role: \"user\"",
+                  "        })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (!err && res && res.json() && res.json().token) {",
+                  "        pm.collectionVariables.set(\"ICS_USER1_TOKEN\", res.json().token);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"5.2 Create Booking for ICS: Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.collectionVariables.set(\"ics_booking_id\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ICS_USER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingDate\": \"2026-12-18T09:30:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/dentists/{{ics_dentist_id}}/bookings",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "dentists", "{{ics_dentist_id}}", "bookings"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 Owner Downloads Booking as iCalendar (.ics) -> Success (200)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Register a second user to test unauthorized access in 5.4",
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const uniqueId = Date.now() + Math.floor(Math.random() * 1000);",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/auth/register`,",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({",
+                  "            name: \"Other User\",",
+                  "            tel: \"0877778888\",",
+                  "            email: `icsother_${uniqueId}@gmail.com`,",
+                  "            password: \"12345678\",",
+                  "            role: \"user\"",
+                  "        })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (!err && res && res.json() && res.json().token) {",
+                  "        pm.collectionVariables.set(\"ICS_USER2_TOKEN\", res.json().token);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"5.3 Download .ics: Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"5.3 Download .ics: Content-Type is text/calendar\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/calendar\");",
+                  "});",
+                  "pm.test(\"5.3 Download .ics: Body contains valid RFC 5545 VCALENDAR and VEVENT\", function () {",
+                  "    const body = pm.response.text();",
+                  "    pm.expect(body).to.include(\"BEGIN:VCALENDAR\");",
+                  "    pm.expect(body).to.include(\"BEGIN:VEVENT\");",
+                  "    pm.expect(body).to.include(\"SUMMARY:Dentist Appointment\");",
+                  "    pm.expect(body).to.include(\"STATUS:CONFIRMED\");",
+                  "    pm.expect(body).to.include(\"END:VCALENDAR\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ICS_USER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/bookings/{{ics_booking_id}}/ics",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "bookings", "{{ics_booking_id}}", "ics"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 Other User Attempts to Download Owner's .ics -> Blocked (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"5.4 Confidentiality Check: Status code is 401 for non-owner\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"5.4 Confidentiality Check: Returns unauthorized message\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "    pm.expect(jsonData.message).to.include(\"not authorized\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ICS_USER2_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/bookings/{{ics_booking_id}}/ics",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "bookings", "{{ics_booking_id}}", "ics"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.5 Cancel Booking & Attempt .ics Download -> Blocked (400)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.collectionVariables.get(\"BASE_URL\") || \"http://localhost:5000\";",
+                  "const bookingId = pm.collectionVariables.get(\"ics_booking_id\");",
+                  "const ownerToken = pm.collectionVariables.get(\"ICS_USER1_TOKEN\");",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: `${baseUrl}/api/v1/bookings/${bookingId}`,",
+                  "    method: \"PUT\",",
+                  "    header: {",
+                  "        \"Content-Type\": \"application/json\",",
+                  "        \"Authorization\": `Bearer ${ownerToken}`",
+                  "    },",
+                  "    body: {",
+                  "        mode: \"raw\",",
+                  "        raw: JSON.stringify({ status: \"cancelled\" })",
+                  "    }",
+                  "}, function () {});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"5.5 Cancelled Booking Check: Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test(\"5.5 Cancelled Booking Check: Only confirmed bookings can be exported\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "    pm.expect(jsonData.message).to.include(\"Only confirmed bookings\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ICS_USER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/bookings/{{ics_booking_id}}/ics",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "bookings", "{{ics_booking_id}}", "ics"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
